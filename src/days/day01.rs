@@ -2,22 +2,29 @@ use std::collections::HashMap;
 
 use crate::common::Solution;
 
+fn find_pattern<'p, I, V>(line: &str, patterns: &'p HashMap<&str, V>, indices: I) -> Option<&'p V>
+where
+    I: Iterator<Item = usize>,
+{
+    indices
+        .flat_map(|i| {
+            patterns.iter().find_map(|(pattern, digit)| {
+                if line[i..].starts_with(pattern) {
+                    Some(digit)
+                } else {
+                    None
+                }
+            })
+        })
+        .next()
+}
+
 fn calib(lines: &[String], patterns: &HashMap<&str, u32>) -> u32 {
     lines
         .iter()
         .map(|line| {
-            let first_digit = patterns[patterns
-                .keys()
-                .flat_map(|pat| line.find(pat).map(|i| (i, pat)))
-                .min_by(|(i1, _), (i2, _)| i1.cmp(i2))
-                .unwrap()
-                .1];
-            let last_digit = patterns[patterns
-                .keys()
-                .flat_map(|pat| line.rfind(pat).map(|i| (i, pat)))
-                .max_by(|(i1, _), (i2, _)| i1.cmp(i2))
-                .unwrap()
-                .1];
+            let first_digit = find_pattern(line, patterns, 0..line.len()).unwrap();
+            let last_digit = find_pattern(line, patterns, (0..line.len()).rev()).unwrap();
             10 * first_digit + last_digit
         })
         .sum()

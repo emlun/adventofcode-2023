@@ -42,7 +42,30 @@ fn solve_a(lines: &[String]) -> u32 {
 }
 
 fn solve_b(lines: &[String]) -> u32 {
-    0
+    lines
+        .iter()
+        .map(|line| {
+            let samples = line.split(":").map(|s| s.trim()).nth(1).unwrap();
+            let mut min_red = 0;
+            let mut min_green = 0;
+            let mut min_blue = 0;
+            for sample in samples.split(";") {
+                for part in sample.trim().split(",") {
+                    let mut splits = part.trim().split(" ");
+                    let num: u32 = splits.next().unwrap().parse().unwrap();
+                    let color = splits.next().unwrap();
+                    let minref = match color {
+                        "red" => &mut min_red,
+                        "green" => &mut min_green,
+                        "blue" => &mut min_blue,
+                        _ => unreachable!(),
+                    };
+                    *minref = std::cmp::max(*minref, num);
+                }
+            }
+            min_red * min_green * min_blue
+        })
+        .sum()
 }
 
 pub fn solve(lines: &[String]) -> Solution {

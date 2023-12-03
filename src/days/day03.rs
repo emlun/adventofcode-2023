@@ -49,8 +49,6 @@ fn solve_a(lines: &[String]) -> u32 {
         return false;
     });
 
-    dbg!(part_numbers.len(), non_part_numbers.len());
-
     part_numbers.into_iter().map(|(_, num)| num).sum()
 }
 

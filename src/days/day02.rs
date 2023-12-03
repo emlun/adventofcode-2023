@@ -1,39 +1,64 @@
+use std::str::FromStr;
+
 use crate::common::Solution;
 
-fn solve_a(lines: &[String]) -> u32 {
-    lines
+struct Game {
+    id: u32,
+    samples: Box<[Sample]>,
+}
+
+struct Sample {
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+
+impl FromStr for Game {
+    type Err = Box<dyn std::error::Error>;
+    fn from_str(input: &str) -> Result<Self, <Self as FromStr>::Err> {
+        let mut splits = input.split(':');
+        let id: u32 = splits.next().unwrap().split(' ').nth(1).unwrap().parse()?;
+        let samples: Vec<Sample> = splits
+            .next()
+            .unwrap()
+            .split(';')
+            .map(|s| s.trim())
+            .map(|sample| {
+                let mut red = 0;
+                let mut green = 0;
+                let mut blue = 0;
+                for part in sample.split(',').map(|s| s.trim()) {
+                    let mut splits = part.split(' ');
+                    let num: u32 = splits.next().unwrap().parse().unwrap();
+                    let color = splits.next().unwrap();
+                    let numref = match color {
+                        "red" => &mut red,
+                        "green" => &mut green,
+                        "blue" => &mut blue,
+                        _ => unreachable!(),
+                    };
+                    *numref = num;
+                }
+                Sample { red, green, blue }
+            })
+            .collect();
+        Ok(Self {
+            id,
+            samples: samples.into(),
+        })
+    }
+}
+
+fn solve_a(games: &[Game]) -> u32 {
+    games
         .iter()
-        .filter_map(|line| {
-            let mut splits = line.split(':');
-            let id: u32 = splits
-                .next()
-                .unwrap()
-                .split(' ')
-                .nth(1)
-                .unwrap()
-                .parse()
-                .unwrap();
-            if splits
-                .next()
-                .unwrap()
-                .split(';')
-                .map(|s| s.trim())
-                .all(|sample| {
-                    sample.split(',').map(|s| s.trim()).all(|part| {
-                        let mut splits = part.split(' ');
-                        let num: u32 = splits.next().unwrap().parse().unwrap();
-                        let color = splits.next().unwrap();
-                        let limit = match color {
-                            "red" => 12,
-                            "green" => 13,
-                            "blue" => 14,
-                            _ => unreachable!(),
-                        };
-                        num <= limit
-                    })
-                })
+        .filter_map(|game| {
+            if game
+                .samples
+                .iter()
+                .all(|sample| sample.red <= 12 && sample.green <= 13 && sample.blue <= 14)
             {
-                Some(id)
+                Some(game.id)
             } else {
                 None
             }
@@ -41,27 +66,17 @@ fn solve_a(lines: &[String]) -> u32 {
         .sum()
 }
 
-fn solve_b(lines: &[String]) -> u32 {
-    lines
+fn solve_b(games: &[Game]) -> u32 {
+    games
         .iter()
-        .map(|line| {
-            let samples = line.split(':').map(|s| s.trim()).nth(1).unwrap();
+        .map(|game| {
             let mut min_red = 0;
             let mut min_green = 0;
             let mut min_blue = 0;
-            for sample in samples.split(';') {
-                for part in sample.trim().split(',') {
-                    let mut splits = part.trim().split(' ');
-                    let num: u32 = splits.next().unwrap().parse().unwrap();
-                    let color = splits.next().unwrap();
-                    let minref = match color {
-                        "red" => &mut min_red,
-                        "green" => &mut min_green,
-                        "blue" => &mut min_blue,
-                        _ => unreachable!(),
-                    };
-                    *minref = std::cmp::max(*minref, num);
-                }
+            for sample in game.samples.iter() {
+                min_red = std::cmp::max(min_red, sample.red);
+                min_green = std::cmp::max(min_green, sample.green);
+                min_blue = std::cmp::max(min_blue, sample.blue);
             }
             min_red * min_green * min_blue
         })
@@ -69,5 +84,6 @@ fn solve_b(lines: &[String]) -> u32 {
 }
 
 pub fn solve(lines: &[String]) -> Solution {
-    (solve_a(lines).to_string(), solve_b(lines).to_string())
+    let games: Vec<Game> = lines.iter().map(|line| line.parse().unwrap()).collect();
+    (solve_a(&games).to_string(), solve_b(&games).to_string())
 }

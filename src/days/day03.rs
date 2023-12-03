@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use crate::common::Solution;
 
-fn solve_a(numbered_parts: &HashMap<(usize, usize), (char, Vec<u32>)>) -> u32 {
+fn solve_a<K>(numbered_parts: &HashMap<K, (char, Vec<u32>)>) -> u32 {
     numbered_parts.values().flat_map(|(_, nums)| nums).sum()
 }
 
-fn solve_b(numbered_parts: &HashMap<(usize, usize), (char, Vec<u32>)>) -> u32 {
+fn solve_b<K>(numbered_parts: &HashMap<K, (char, Vec<u32>)>) -> u32 {
     numbered_parts
         .values()
         .filter(|(part, nums)| *part == '*' && nums.len() == 2)

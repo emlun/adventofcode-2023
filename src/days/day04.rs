@@ -4,7 +4,6 @@ use std::str::FromStr;
 use crate::common::Solution;
 
 struct Card {
-    id: u32,
     win: HashSet<u32>,
     have: HashSet<u32>,
 }
@@ -12,20 +11,12 @@ struct Card {
 impl FromStr for Card {
     type Err = Box<dyn std::error::Error>;
     fn from_str(input: &str) -> Result<Self, <Self as FromStr>::Err> {
-        let mut splits = input.split(':');
-        let id: u32 = splits
-            .next()
-            .unwrap()
-            .split_whitespace()
-            .nth(1)
-            .unwrap()
-            .parse()?;
-        let (s_win, s_have) = splits.next().unwrap().split_once('|').unwrap();
+        let (s_win, s_have) = input.split_once(':').unwrap().1.split_once('|').unwrap();
 
         let win = s_win.split_whitespace().flat_map(str::parse).collect();
         let have = s_have.split_whitespace().flat_map(str::parse).collect();
 
-        Ok(Self { id, win, have })
+        Ok(Self { win, have })
     }
 }
 
@@ -49,8 +40,8 @@ fn solve_b(cards: &[Card]) -> usize {
             .enumerate()
             .fold(vec![1; cards.len()], |mut card_qty, (i, card)| {
                 let num_wins = card.num_wins();
-                for wini in (i + 1)..std::cmp::min(card_qty.len(), (i + 1 + num_wins)) {
-                    card_qty[wini] += card_qty[i] * 1;
+                for wini in (i + 1)..std::cmp::min(card_qty.len(), i + 1 + num_wins) {
+                    card_qty[wini] += card_qty[i];
                 }
                 card_qty
             });

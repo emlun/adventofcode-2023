@@ -30,8 +30,11 @@ impl FromStr for Card {
 }
 
 impl Card {
+    fn num_wins(&self) -> usize {
+        self.win.intersection(&self.have).count()
+    }
     fn score(&self) -> u32 {
-        (1 << (self.win.intersection(&self.have).count())) >> 1
+        (1 << self.num_wins()) >> 1
     }
 }
 
@@ -39,8 +42,19 @@ fn solve_a(cards: &[Card]) -> u32 {
     cards.iter().map(Card::score).sum()
 }
 
-fn solve_b(cards: &[Card]) -> u32 {
-    0
+fn solve_b(cards: &[Card]) -> usize {
+    let card_qty =
+        cards
+            .iter()
+            .enumerate()
+            .fold(vec![1; cards.len()], |mut card_qty, (i, card)| {
+                let num_wins = card.num_wins();
+                for wini in (i + 1)..std::cmp::min(card_qty.len(), (i + 1 + num_wins)) {
+                    card_qty[wini] += card_qty[i] * 1;
+                }
+                card_qty
+            });
+    card_qty.into_iter().sum()
 }
 
 pub fn solve(lines: &[String]) -> Solution {

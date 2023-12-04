@@ -4,8 +4,7 @@ use std::str::FromStr;
 use crate::common::Solution;
 
 struct Card {
-    win: HashSet<u32>,
-    have: HashSet<u32>,
+    num_wins: usize,
 }
 
 impl FromStr for Card {
@@ -13,19 +12,17 @@ impl FromStr for Card {
     fn from_str(input: &str) -> Result<Self, <Self as FromStr>::Err> {
         let (s_win, s_have) = input.split_once(':').unwrap().1.split_once('|').unwrap();
 
-        let win = s_win.split_whitespace().flat_map(str::parse).collect();
-        let have = s_have.split_whitespace().flat_map(str::parse).collect();
+        let win: HashSet<u32> = s_win.split_whitespace().flat_map(str::parse).collect();
+        let have: HashSet<u32> = s_have.split_whitespace().flat_map(str::parse).collect();
+        let num_wins = win.intersection(&have).count();
 
-        Ok(Self { win, have })
+        Ok(Self { num_wins })
     }
 }
 
 impl Card {
-    fn num_wins(&self) -> usize {
-        self.win.intersection(&self.have).count()
-    }
     fn score(&self) -> u32 {
-        (1 << self.num_wins()) >> 1
+        (1 << self.num_wins) >> 1
     }
 }
 
@@ -39,8 +36,7 @@ fn solve_b(cards: &[Card]) -> usize {
             .iter()
             .enumerate()
             .fold(vec![1; cards.len()], |mut card_qty, (i, card)| {
-                let num_wins = card.num_wins();
-                for wini in (i + 1)..std::cmp::min(card_qty.len(), i + 1 + num_wins) {
+                for wini in (i + 1)..std::cmp::min(card_qty.len(), i + 1 + card.num_wins) {
                     card_qty[wini] += card_qty[i];
                 }
                 card_qty

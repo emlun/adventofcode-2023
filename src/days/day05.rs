@@ -1,17 +1,15 @@
-use std::collections::HashMap;
-
 use crate::common::Solution;
 
-fn solve_a(seeds: &[u64], maps: &[HashMap<(u64, u64), u64>]) -> u64 {
+fn solve_a(seeds: &[u64], maps: &[Vec<(u64, u64, u64)>]) -> u64 {
     maps.iter()
         .fold(seeds.to_vec(), |values, map| {
             values
                 .into_iter()
                 .map(|v| {
-                    map.keys()
-                        .filter(|(src, len)| *src <= v && v < src + len)
-                        .max_by_key(|(src, _)| src)
-                        .and_then(|(src, len)| map.get(&(*src, *len)).map(|dest| dest + (v - src)))
+                    map.iter()
+                        .filter(|(src, _, len)| *src <= v && v < src + len)
+                        .max_by_key(|(src, _, _)| src)
+                        .map(|(src, dest, _)| dest + (v - src))
                         .unwrap_or(v)
                 })
                 .collect()
@@ -61,6 +59,7 @@ pub fn solve(lines: &[String]) -> Solution {
         .skip(1)
         .flat_map(|s| s.parse().ok())
         .collect();
+
     let (seeds_b, _): (Vec<(u64, u64)>, _) = lines[0]
         .split_whitespace()
         .skip(1)
@@ -74,34 +73,29 @@ pub fn solve(lines: &[String]) -> Solution {
             }
         });
 
-    let mut maps: Vec<HashMap<(u64, u64), u64>> = Vec::new();
-    let mut next_map = HashMap::new();
+    let mut maps: Vec<Vec<(u64, u64, u64)>> = Vec::new();
+    let mut next_map = Vec::new();
     for line in lines.iter().skip(2) {
         if line.is_empty() {
             maps.push(next_map);
-            next_map = HashMap::new();
+            next_map = Vec::new();
         } else if !line.ends_with("map:") {
             let mut parts = line.split_whitespace();
             let dest = parts.next().unwrap().parse().unwrap();
             let src = parts.next().unwrap().parse().unwrap();
             let len: u64 = parts.next().unwrap().parse().unwrap();
-            next_map.insert((src, len), dest);
+            next_map.push((src, dest, len));
         }
     }
     if !next_map.is_empty() {
         maps.push(next_map);
     }
-    let a = solve_a(&seeds_a, &maps);
-    let maps: Vec<Vec<(u64, u64, u64)>> = maps
-        .into_iter()
-        .map(|map| {
-            let mut m: Vec<(u64, u64, u64)> = map
-                .into_iter()
-                .map(|((src, len), dest)| (src, dest, len))
-                .collect();
-            m.sort_by_key(|(src, _, _)| *src);
-            m
-        })
-        .collect();
-    (a.to_string(), solve_b(&seeds_b, &maps).to_string())
+    for m in &mut maps {
+        m.sort_by_key(|(src, _, _)| *src);
+    }
+
+    (
+        solve_a(&seeds_a, &maps).to_string(),
+        solve_b(&seeds_b, &maps).to_string(),
+    )
 }

@@ -74,10 +74,9 @@ pub fn solve(lines: &[String]) -> Solution {
             }
         });
 
-    let mut lines_iter = lines.iter().skip(2);
     let mut maps: Vec<HashMap<(u64, u64), u64>> = Vec::new();
     let mut next_map = HashMap::new();
-    while let Some(line) = lines_iter.next() {
+    for line in lines.iter().skip(2) {
         if line.is_empty() {
             maps.push(next_map);
             next_map = HashMap::new();

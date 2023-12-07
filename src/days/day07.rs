@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use crate::common::Solution;
 use crate::util::iter::Countable;
 
-fn categorize(hand: &[u32], joker_value: u32) -> u32 {
+fn categorize(hand: &[u8], joker_value: u8) -> u8 {
     let jokers = hand.iter().filter(|card| **card == joker_value).count();
-    let counts: HashMap<u32, usize> = hand
+    let counts: HashMap<u8, usize> = hand
         .iter()
         .copied()
         .filter(|card| *card != joker_value)
@@ -41,7 +41,7 @@ fn categorize(hand: &[u32], joker_value: u32) -> u32 {
     }
 }
 
-fn demote_jokers(mut hand: [u32; 5]) -> [u32; 5] {
+fn demote_jokers(mut hand: [u8; 5]) -> [u8; 5] {
     for card in &mut hand {
         if *card == 11 {
             *card = 1
@@ -50,7 +50,7 @@ fn demote_jokers(mut hand: [u32; 5]) -> [u32; 5] {
     hand
 }
 
-fn solve_a(hands: &mut [(u32, [u32; 5], usize)]) -> usize {
+fn solve_a(hands: &mut [(u8, [u8; 5], usize)]) -> usize {
     hands.sort();
     hands
         .iter()
@@ -59,8 +59,8 @@ fn solve_a(hands: &mut [(u32, [u32; 5], usize)]) -> usize {
         .sum()
 }
 
-fn solve_b(hands: Vec<(u32, [u32; 5], usize)>) -> usize {
-    let mut hands: Vec<(u32, [u32; 5], usize)> = hands
+fn solve_b(hands: Vec<(u8, [u8; 5], usize)>) -> usize {
+    let mut hands: Vec<(u8, [u8; 5], usize)> = hands
         .into_iter()
         .map(|(_, hand, bid)| {
             let category = categorize(&hand, 11);
@@ -76,12 +76,12 @@ fn solve_b(hands: Vec<(u32, [u32; 5], usize)>) -> usize {
 }
 
 pub fn solve(lines: &[String]) -> Solution {
-    let mut hands: Vec<(u32, [u32; 5], usize)> = lines
+    let mut hands: Vec<(u8, [u8; 5], usize)> = lines
         .iter()
         .filter(|line| !line.is_empty())
         .map(|line| {
             let mut parts = line.split_whitespace();
-            let hand: [u32; 5] = parts
+            let hand: [u8; 5] = parts
                 .next()
                 .unwrap()
                 .chars()
@@ -91,9 +91,9 @@ pub fn solve(lines: &[String]) -> Solution {
                     'Q' => 12,
                     'J' => 11,
                     'T' => 10,
-                    other => other.to_digit(10).unwrap(),
+                    other => u8::try_from(other.to_digit(10).unwrap()).unwrap(),
                 })
-                .collect::<Vec<u32>>()
+                .collect::<Vec<u8>>()
                 .try_into()
                 .unwrap();
             (

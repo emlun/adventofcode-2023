@@ -2,36 +2,12 @@ use std::collections::HashMap;
 
 use crate::common::Solution;
 
-fn categorize(hand: &[u32]) -> u32 {
-    let counts: HashMap<u32, u32> =
-        hand.iter()
-            .fold(HashMap::with_capacity(5), |mut counts, card| {
-                *counts.entry(*card).or_default() += 1;
-                counts
-            });
-    if counts.values().any(|count| *count == 5) {
-        7
-    } else if counts.values().any(|count| *count == 4) {
-        6
-    } else if counts.values().all(|count| *count >= 2) {
-        5
-    } else if counts.values().any(|count| *count == 3) {
-        4
-    } else if counts.values().filter(|count| **count == 2).count() == 2 {
-        3
-    } else if counts.values().any(|count| *count == 2) {
-        2
-    } else {
-        1
-    }
-}
-
-fn categorize_jokers(hand: &[u32]) -> u32 {
-    let jokers = hand.iter().filter(|card| **card == 11).count();
+fn categorize(hand: &[u32], joker_value: u32) -> u32 {
+    let jokers = hand.iter().filter(|card| **card == joker_value).count();
     let counts: HashMap<u32, usize> =
         hand.iter()
             .fold(HashMap::with_capacity(5), |mut counts, card| {
-                if *card != 11 {
+                if *card != joker_value {
                     *counts.entry(*card).or_default() += 1;
                 }
                 counts
@@ -89,7 +65,7 @@ fn solve_b(hands: Vec<(u32, [u32; 5], usize)>) -> usize {
     let mut hands: Vec<(u32, [u32; 5], usize)> = hands
         .into_iter()
         .map(|(_, hand, bid)| {
-            let category = categorize_jokers(&hand);
+            let category = categorize(&hand, 11);
             (category, demote_jokers(hand), bid)
         })
         .collect();
@@ -123,7 +99,7 @@ pub fn solve(lines: &[String]) -> Solution {
                 .try_into()
                 .unwrap();
             (
-                categorize(&hand),
+                categorize(&hand, 20),
                 hand,
                 parts.next().unwrap().parse().unwrap(),
             )

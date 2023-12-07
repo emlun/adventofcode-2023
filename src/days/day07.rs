@@ -26,7 +26,73 @@ fn categorize(hand: &[u32]) -> u32 {
     }
 }
 
+fn categorize_jokers(hand: &[u32]) -> u32 {
+    let jokers = hand.iter().filter(|card| **card == 11).count();
+    let counts: HashMap<u32, usize> =
+        hand.iter()
+            .fold(HashMap::with_capacity(5), |mut counts, card| {
+                if *card != 11 {
+                    *counts.entry(*card).or_default() += 1;
+                }
+                counts
+            });
+
+    if jokers >= 4
+        || counts
+            .values()
+            .any(|count| *count >= 5_usize.saturating_sub(jokers))
+    {
+        7
+    } else if counts
+        .values()
+        .any(|count| *count >= 4_usize.saturating_sub(jokers))
+    {
+        6
+    } else if counts.len() <= 2 {
+        5
+    } else if counts
+        .values()
+        .any(|count| *count >= 3_usize.saturating_sub(jokers))
+    {
+        4
+    } else if counts.len() <= 3 {
+        3
+    } else if counts
+        .values()
+        .any(|count| *count == 2_usize.saturating_sub(jokers))
+    {
+        2
+    } else {
+        1
+    }
+}
+
+fn demote_jokers(mut hand: [u32; 5]) -> [u32; 5] {
+    for card in &mut hand {
+        if *card == 11 {
+            *card = 1
+        }
+    }
+    hand
+}
+
 fn solve_a(hands: &mut Vec<(u32, [u32; 5], usize)>) -> usize {
+    hands.sort();
+    hands
+        .iter()
+        .enumerate()
+        .map(|(rank, (_, _, bid))| (rank + 1) * bid)
+        .sum()
+}
+
+fn solve_b(hands: Vec<(u32, [u32; 5], usize)>) -> usize {
+    let mut hands: Vec<(u32, [u32; 5], usize)> = hands
+        .into_iter()
+        .map(|(_, hand, bid)| {
+            let category = categorize_jokers(&hand);
+            (category, demote_jokers(hand), bid)
+        })
+        .collect();
     hands.sort();
     hands
         .iter()
@@ -64,5 +130,5 @@ pub fn solve(lines: &[String]) -> Solution {
         })
         .collect();
 
-    (solve_a(&mut hands).to_string(), "".to_string())
+    (solve_a(&mut hands).to_string(), solve_b(hands).to_string())
 }

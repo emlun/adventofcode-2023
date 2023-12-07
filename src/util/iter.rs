@@ -37,7 +37,13 @@ where
 impl<I> WithSliding for I where I: Iterator {}
 
 pub trait Countable<A> {
-    fn counts(self) -> HashMap<A, usize>;
+    fn counts_into(self, init: HashMap<A, usize>) -> HashMap<A, usize>;
+    fn counts(self) -> HashMap<A, usize>
+    where
+        Self: Sized,
+    {
+        self.counts_into(HashMap::new())
+    }
 }
 
 impl<A, I> Countable<A> for I
@@ -46,8 +52,8 @@ where
     A: std::hash::Hash,
     I: Iterator<Item = A>,
 {
-    fn counts(self) -> HashMap<A, usize> {
-        self.fold(HashMap::new(), |mut result, item| {
+    fn counts_into(self, init: HashMap<A, usize>) -> HashMap<A, usize> {
+        self.fold(init, |mut result, item| {
             result.entry(item).and_modify(|c| *c += 1).or_insert(1);
             result
         })

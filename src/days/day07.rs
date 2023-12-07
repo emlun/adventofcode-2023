@@ -76,7 +76,7 @@ fn demote_jokers(mut hand: [u32; 5]) -> [u32; 5] {
     hand
 }
 
-fn solve_a(hands: &mut Vec<(u32, [u32; 5], usize)>) -> usize {
+fn solve_a(hands: &mut [(u32, [u32; 5], usize)]) -> usize {
     hands.sort();
     hands
         .iter()

@@ -50,6 +50,6 @@ pub fn solve(lines: &[String]) -> Solution {
         .skip(1)
         .flat_map(|s| s.parse().ok())
         .collect();
-    let races: Vec<(u64, u64)> = times.into_iter().zip(distances.into_iter()).collect();
+    let races: Vec<(u64, u64)> = times.into_iter().zip(distances).collect();
     (solve_a(&races).to_string(), solve_b(&races).to_string())
 }

@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 
 use crate::common::Solution;
+use crate::util::iter::Countable;
 
 fn categorize(hand: &[u32], joker_value: u32) -> u32 {
     let jokers = hand.iter().filter(|card| **card == joker_value).count();
-    let counts: HashMap<u32, usize> =
-        hand.iter()
-            .fold(HashMap::with_capacity(5), |mut counts, card| {
-                if *card != joker_value {
-                    *counts.entry(*card).or_default() += 1;
-                }
-                counts
-            });
+    let counts: HashMap<u32, usize> = hand
+        .iter()
+        .copied()
+        .filter(|card| *card != joker_value)
+        .counts_into(HashMap::with_capacity(5));
 
     if jokers >= 4
         || counts

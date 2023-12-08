@@ -16,19 +16,16 @@ fn lcm(a: usize, b: usize) -> usize {
 }
 
 fn solve_a(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
-    instructions
-        .iter()
-        .cycle()
-        .scan("AAA", |location, step| {
-            if *location == "ZZZ" {
-                None
-            } else {
-                let (left, right) = map[location];
-                *location = if *step { right } else { left };
-                Some(*location)
-            }
-        })
-        .count()
+    let mut location = "AAA";
+    for (i, step) in instructions.iter().cycle().enumerate() {
+        if location == "ZZZ" {
+            return i;
+        } else {
+            let (left, right) = map[location];
+            location = if *step { right } else { left };
+        }
+    }
+    unreachable!()
 }
 
 fn solve_b(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {

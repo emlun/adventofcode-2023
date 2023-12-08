@@ -41,9 +41,9 @@ fn categorize(hand: &[u8], joker_value: u8) -> u8 {
     }
 }
 
-fn demote_jokers(mut hand: [u8; 5]) -> [u8; 5] {
+fn demote_jokers(mut hand: [u8; 5], joker_value: u8) -> [u8; 5] {
     for card in &mut hand {
-        if *card == 11 {
+        if *card == joker_value {
             *card = 1
         }
     }
@@ -64,7 +64,7 @@ fn solve_b(hands: Vec<(u8, [u8; 5], usize)>) -> usize {
         .into_iter()
         .map(|(_, hand, bid)| {
             let category = categorize(&hand, 11);
-            (category, demote_jokers(hand), bid)
+            (category, demote_jokers(hand, 11), bid)
         })
         .collect();
     hands.sort();

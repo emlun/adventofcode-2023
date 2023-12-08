@@ -1,7 +1,13 @@
+pub mod day01;
+pub mod day02;
+pub mod day03;
+pub mod day04;
+pub mod day05;
+pub mod day06;
+pub mod day07;
+
 macro_rules! days {
     ($($day_mod:ident),*) => {
-        $(pub mod $day_mod;)*
-
         pub fn get_solver(day: u8) -> Option<fn(&[String]) -> crate::common::Solution> {
             match format!("day{:02}", day).as_str() {
                 $(stringify!($day_mod) => Some($day_mod::solve),)*

@@ -32,27 +32,23 @@ fn solve_a(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
 }
 
 fn solve_b(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
-    let mut locations: Vec<(&str, Option<usize>)> = map
-        .keys()
-        .filter(|k| k.ends_with('A'))
-        .copied()
-        .map(|loc| (loc, None))
-        .collect();
+    let mut locations: Vec<&str> = map.keys().filter(|k| k.ends_with('A')).copied().collect();
+    let mut period = 1;
 
     for (i, step) in instructions.iter().cycle().enumerate() {
-        for (loc, period) in locations.iter_mut() {
+        locations.retain_mut(|loc| {
             let (left, right) = map[loc];
             *loc = if *step { right } else { left };
-            if period.is_none() && loc.ends_with('Z') {
-                *period = Some(i + 1);
+            if loc.ends_with('Z') {
+                period = lcm(period, i + 1);
+                false
+            } else {
+                true
             }
-        }
+        });
 
-        if locations.iter().all(|(_, period)| period.is_some()) {
-            return locations
-                .into_iter()
-                .flat_map(|(_, period)| period)
-                .fold(1, lcm);
+        if locations.is_empty() {
+            return period;
         }
     }
 

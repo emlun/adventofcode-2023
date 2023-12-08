@@ -32,39 +32,31 @@ fn solve_a(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
 }
 
 fn solve_b(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
-    instructions
-        .iter()
-        .cycle()
-        .enumerate()
-        .scan(
-            map.keys()
-                .filter(|k| k.ends_with('A'))
-                .copied()
-                .map(|loc| (loc, None))
-                .collect(),
-            |locations: &mut Vec<(&str, Option<usize>)>, (i, step): (usize, &bool)| {
-                if locations.iter().all(|(_, period)| period.is_some()) {
-                    None
-                } else {
-                    for (loc, period) in locations.iter_mut() {
-                        let (left, right) = map[loc];
-                        *loc = if *step { right } else { left };
-                        if period.is_none() && loc.ends_with('Z') {
-                            *period = Some(i + 1);
-                        }
-                    }
-                    Some(
-                        locations
-                            .iter()
-                            .flat_map(|(_, period)| period)
-                            .copied()
-                            .fold(1, lcm),
-                    )
-                }
-            },
-        )
-        .last()
-        .unwrap()
+    let mut locations: Vec<(&str, Option<usize>)> = map
+        .keys()
+        .filter(|k| k.ends_with('A'))
+        .copied()
+        .map(|loc| (loc, None))
+        .collect();
+
+    for (i, step) in instructions.iter().cycle().enumerate() {
+        for (loc, period) in locations.iter_mut() {
+            let (left, right) = map[loc];
+            *loc = if *step { right } else { left };
+            if period.is_none() && loc.ends_with('Z') {
+                *period = Some(i + 1);
+            }
+        }
+
+        if locations.iter().all(|(_, period)| period.is_some()) {
+            return locations
+                .into_iter()
+                .flat_map(|(_, period)| period)
+                .fold(1, lcm);
+        }
+    }
+
+    unreachable!()
 }
 
 pub fn solve(lines: &[String]) -> Solution {

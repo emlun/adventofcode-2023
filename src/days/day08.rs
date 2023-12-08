@@ -1,19 +1,7 @@
 use std::collections::HashMap;
 
 use crate::common::Solution;
-
-fn gcd(a: usize, b: usize) -> usize {
-    if b == 0 {
-        a
-    } else {
-        gcd(b, a % b)
-    }
-}
-
-fn lcm(a: usize, b: usize) -> usize {
-    let gcdab = gcd(a, b);
-    (a / gcdab) * b
-}
+use crate::util::lcm;
 
 fn solve_a(instructions: &[bool], map: &HashMap<&str, (&str, &str)>) -> usize {
     let mut location = "AAA";

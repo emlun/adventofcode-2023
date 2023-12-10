@@ -127,23 +127,43 @@ fn solve_b(map: &HashMap<(usize, usize), Tile>) -> usize {
     map.keys()
         .filter(|pos| !main_loop.contains(pos))
         .filter(|(x, y)| {
-            let parity = (0..*x)
-                .filter(|xx| {
-                    use Tile::*;
-                    main_loop.contains(&(*xx, *y))
-                        && match map.get(&(*xx, *y)) {
-                            Some(Vert | NE | NW) => true,
-                            Some(Start) => {
-                                let start_tile = identify_start((*xx, *y), map);
-                                matches!(start_tile, Vert | NE | NW)
+            if x <= y {
+                let parity = (0..*x)
+                    .filter(|xx| {
+                        use Tile::*;
+                        main_loop.contains(&(*xx, *y))
+                            && match map.get(&(*xx, *y)) {
+                                Some(Vert | NE | NW) => true,
+                                Some(Start) => {
+                                    let start_tile = identify_start((*xx, *y), map);
+                                    matches!(start_tile, Vert | NE | NW)
+                                }
+                                _ => false,
                             }
-                            _ => false,
-                        }
-                })
-                .count()
-                % 2;
+                    })
+                    .count()
+                    % 2;
 
-            parity == 1
+                parity == 1
+            } else {
+                let parity = (0..*y)
+                    .filter(|yy| {
+                        use Tile::*;
+                        main_loop.contains(&(*x, *yy))
+                            && match map.get(&(*x, *yy)) {
+                                Some(Horz | NE | SE) => true,
+                                Some(Start) => {
+                                    let start_tile = identify_start((*x, *yy), map);
+                                    matches!(start_tile, Horz | NE | SE)
+                                }
+                                _ => false,
+                            }
+                    })
+                    .count()
+                    % 2;
+
+                parity == 1
+            }
         })
         .count()
 }

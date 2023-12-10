@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use crate::common::Solution;
 
@@ -14,21 +15,21 @@ enum Tile {
     Empty,
 }
 
-fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
+fn find_main_loop(map: &HashMap<(usize, usize), Tile>) -> HashSet<(usize, usize)> {
     use Tile::*;
-    let (start_x, start_y) = map
+    let (start_x, start_y): (usize, usize) = map
         .iter()
         .find_map(|(pos, tile)| {
             if *tile == Tile::Start {
-                Some(pos)
+                Some(*pos)
             } else {
                 None
             }
         })
         .unwrap();
-    1 + (0..)
+    (0..)
         .scan(
-            vec![((*start_x, *start_y), (*start_x, *start_y))],
+            vec![((start_x, start_y), (start_x, start_y))],
             |state, _| {
                 let new_poss: Vec<((usize, usize), (usize, usize))> = state
                     .iter()
@@ -53,7 +54,7 @@ fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
                                 if new_pos == *prev_pos {
                                     None
                                 } else {
-                                    match (dx, dy, &map[&new_pos]) {
+                                    map.get(&new_pos).and_then(|t| match (dx, dy, t) {
                                         (_, 0, Horz) => Some(new_pos),
                                         (0, _, Vert) => Some(new_pos),
                                         (-1, 0, NE | SE) => Some(new_pos),
@@ -61,19 +62,75 @@ fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
                                         (0, -1, SE | SW) => Some(new_pos),
                                         (0, 1, NE | NW) => Some(new_pos),
                                         _ => None,
-                                    }
+                                    })
                                 }
                             })
                             .map(|new_pos| (*pos, new_pos))
                     })
+                    .take(1)
                     .collect();
                 *state = new_poss.clone();
                 Some(new_poss)
             },
         )
         .take_while(|poss| {
-            !(poss.iter().all(|(_, pos)| *pos == poss[0].1)
-                || (poss[0].0 == poss[1].1 && poss[1].0 == poss[0].1))
+            if let Some((_, curr)) = poss.first() {
+                *curr != (start_x, start_y)
+            } else {
+                false
+            }
+        })
+        .flat_map(|poss| poss.into_iter().map(|(_, curr)| curr))
+        .chain([(start_x, start_y)])
+        .collect()
+}
+
+fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
+    find_main_loop(map).len() / 2
+}
+
+fn solve_b(map: &HashMap<(usize, usize), Tile>) -> usize {
+    let main_loop = find_main_loop(map);
+
+    map.keys()
+        .filter(|pos| !main_loop.contains(pos))
+        .filter(|(x, y)| {
+            let parity = (0..*x)
+                .filter(|xx| {
+                    use Tile::*;
+                    main_loop.contains(&(*xx, *y))
+                        && match map.get(&(*xx, *y)) {
+                            Some(Vert | NE | NW) => true,
+                            Some(Start) => {
+                                let start_tile = match (
+                                    map.get(&(xx.wrapping_add_signed(-1), *y)).unwrap_or(&Empty),
+                                    map.get(&(xx.wrapping_add_signed(1), *y)).unwrap_or(&Empty),
+                                    map.get(&(*xx, y.wrapping_add_signed(-1))).unwrap_or(&Empty),
+                                    map.get(&(*xx, y.wrapping_add_signed(1))).unwrap_or(&Empty),
+                                ) {
+                                    (Horz | NE | SE, _, Vert | SW | SE, _) => NW,
+                                    (_, Horz | NW | SW, Vert | SW | SE, _) => NE,
+
+                                    (Horz | NE | SE, _, _, Vert | NW | NE) => SW,
+                                    (_, Horz | NW | SW, _, Vert | NW | NE) => SE,
+
+                                    (_, _, Vert | SW | SE, Vert | NW | NE) => Vert,
+                                    (Horz | NE | SE, Horz | NW | SW, _, _) => Horz,
+
+                                    _ => unreachable!(),
+                                };
+                                match start_tile {
+                                    Vert | NE | NW => true,
+                                    _ => false,
+                                }
+                            }
+                            _ => false,
+                        }
+                })
+                .count()
+                % 2;
+
+            parity == 1
         })
         .count()
 }
@@ -104,5 +161,5 @@ pub fn solve(lines: &[String]) -> Solution {
         })
         .collect();
 
-    (solve_a(&map).to_string(), "".to_string())
+    (solve_a(&map).to_string(), solve_b(&map).to_string())
 }

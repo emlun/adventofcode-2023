@@ -15,17 +15,41 @@ enum Tile {
     Empty,
 }
 
+impl Tile {
+    fn connects_to(&self, (dx, dy): (isize, isize)) -> bool {
+        use Tile::*;
+        matches!(
+            (dx, dy, self),
+            (_, 0, Horz)
+                | (0, _, Vert)
+                | (1, 0, NE | SE)
+                | (-1, 0, NW | SW)
+                | (0, 1, SE | SW)
+                | (0, -1, NE | NW)
+                | (_, _, Start)
+        )
+    }
+
+    fn connects_from(&self, (dx, dy): (isize, isize)) -> bool {
+        use Tile::*;
+        matches!(
+            (dx, dy, self),
+            (_, 0, Horz)
+                | (0, _, Vert)
+                | (-1, 0, NE | SE)
+                | (1, 0, NW | SW)
+                | (0, -1, SE | SW)
+                | (0, 1, NE | NW)
+                | (_, _, Start)
+        )
+    }
+}
+
 fn find_main_loop(map: &HashMap<(usize, usize), Tile>) -> HashSet<(usize, usize)> {
     use Tile::*;
     let (start_x, start_y): (usize, usize) = map
         .iter()
-        .find_map(|(pos, tile)| {
-            if *tile == Tile::Start {
-                Some(*pos)
-            } else {
-                None
-            }
-        })
+        .find_map(|(pos, tile)| if *tile == Start { Some(*pos) } else { None })
         .unwrap();
     (0..)
         .scan(
@@ -36,36 +60,17 @@ fn find_main_loop(map: &HashMap<(usize, usize), Tile>) -> HashSet<(usize, usize)
                     .flat_map(|(prev_pos, pos @ (x, y))| {
                         [(-1, 0), (1, 0), (0, -1), (0, 1)]
                             .iter()
-                            .filter(move |(dx, dy)| {
-                                matches!(
-                                    (dx, dy, &map[pos]),
-                                    (_, 0, Horz)
-                                        | (0, _, Vert)
-                                        | (-1, 0, NW | SW)
-                                        | (1, 0, NE | SE)
-                                        | (0, -1, NE | NW)
-                                        | (0, 1, SE | SW)
-                                        | (_, _, Start)
-                                )
-                            })
+                            .filter(move |dxy| map[pos].connects_to(**dxy))
                             .flat_map(move |(dx, dy)| {
-                                let new_pos = (
-                                    x.overflowing_add_signed(*dx).0,
-                                    y.overflowing_add_signed(*dy).0,
-                                );
-                                if new_pos == *prev_pos {
-                                    None
-                                } else {
-                                    map.get(&new_pos).and_then(|t| match (dx, dy, t) {
-                                        (_, 0, Horz) => Some(new_pos),
-                                        (0, _, Vert) => Some(new_pos),
-                                        (-1, 0, NE | SE) => Some(new_pos),
-                                        (1, 0, NW | SW) => Some(new_pos),
-                                        (0, -1, SE | SW) => Some(new_pos),
-                                        (0, 1, NE | NW) => Some(new_pos),
-                                        _ => None,
-                                    })
-                                }
+                                let new_pos =
+                                    (x.wrapping_add_signed(*dx), y.wrapping_add_signed(*dy));
+                                Some(new_pos).filter(|np| {
+                                    np != prev_pos
+                                        && map
+                                            .get(np)
+                                            .map(|t| t.connects_from((*dx, *dy)))
+                                            .unwrap_or(false)
+                                })
                             })
                             .map(|new_pos| (*pos, new_pos))
                     })
@@ -87,6 +92,31 @@ fn find_main_loop(map: &HashMap<(usize, usize), Tile>) -> HashSet<(usize, usize)
         .collect()
 }
 
+fn identify_start((x, y): (usize, usize), map: &HashMap<(usize, usize), Tile>) -> Tile {
+    use Tile::*;
+    let xw = x.wrapping_add_signed(-1);
+    let xe = x.wrapping_add_signed(1);
+    let yn = y.wrapping_add_signed(-1);
+    let ys = y.wrapping_add_signed(1);
+    match (
+        map.get(&(xw, y)).map(|t| t.connects_from((-1, 0))),
+        map.get(&(xe, y)).map(|t| t.connects_from((1, 0))),
+        map.get(&(x, yn)).map(|t| t.connects_from((0, -1))),
+        map.get(&(x, ys)).map(|t| t.connects_from((0, 1))),
+    ) {
+        (Some(true), _, Some(true), _) => NW,
+        (_, Some(true), Some(true), _) => NE,
+
+        (Some(true), _, _, Some(true)) => SW,
+        (_, Some(true), _, Some(true)) => SE,
+
+        (_, _, Some(true), Some(true)) => Vert,
+        (Some(true), Some(true), _, _) => Horz,
+
+        _ => unreachable!(),
+    }
+}
+
 fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
     find_main_loop(map).len() / 2
 }
@@ -104,23 +134,7 @@ fn solve_b(map: &HashMap<(usize, usize), Tile>) -> usize {
                         && match map.get(&(*xx, *y)) {
                             Some(Vert | NE | NW) => true,
                             Some(Start) => {
-                                let start_tile = match (
-                                    map.get(&(xx.wrapping_add_signed(-1), *y)).unwrap_or(&Empty),
-                                    map.get(&(xx.wrapping_add_signed(1), *y)).unwrap_or(&Empty),
-                                    map.get(&(*xx, y.wrapping_add_signed(-1))).unwrap_or(&Empty),
-                                    map.get(&(*xx, y.wrapping_add_signed(1))).unwrap_or(&Empty),
-                                ) {
-                                    (Horz | NE | SE, _, Vert | SW | SE, _) => NW,
-                                    (_, Horz | NW | SW, Vert | SW | SE, _) => NE,
-
-                                    (Horz | NE | SE, _, _, Vert | NW | NE) => SW,
-                                    (_, Horz | NW | SW, _, Vert | NW | NE) => SE,
-
-                                    (_, _, Vert | SW | SE, Vert | NW | NE) => Vert,
-                                    (Horz | NE | SE, Horz | NW | SW, _, _) => Horz,
-
-                                    _ => unreachable!(),
-                                };
+                                let start_tile = identify_start((*xx, *y), map);
                                 matches!(start_tile, Vert | NE | NW)
                             }
                             _ => false,

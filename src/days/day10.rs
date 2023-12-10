@@ -36,15 +36,17 @@ fn find_main_loop(map: &HashMap<(usize, usize), Tile>) -> HashSet<(usize, usize)
                     .flat_map(|(prev_pos, pos @ (x, y))| {
                         [(-1, 0), (1, 0), (0, -1), (0, 1)]
                             .iter()
-                            .filter(move |(dx, dy)| match (dx, dy, &map[&pos]) {
-                                (_, 0, Horz) => true,
-                                (0, _, Vert) => true,
-                                (-1, 0, NW | SW) => true,
-                                (1, 0, NE | SE) => true,
-                                (0, -1, NE | NW) => true,
-                                (0, 1, SE | SW) => true,
-                                (_, _, Start) => true,
-                                _ => false,
+                            .filter(move |(dx, dy)| {
+                                matches!(
+                                    (dx, dy, &map[pos]),
+                                    (_, 0, Horz)
+                                        | (0, _, Vert)
+                                        | (-1, 0, NW | SW)
+                                        | (1, 0, NE | SE)
+                                        | (0, -1, NE | NW)
+                                        | (0, 1, SE | SW)
+                                        | (_, _, Start)
+                                )
                             })
                             .flat_map(move |(dx, dy)| {
                                 let new_pos = (
@@ -119,10 +121,7 @@ fn solve_b(map: &HashMap<(usize, usize), Tile>) -> usize {
 
                                     _ => unreachable!(),
                                 };
-                                match start_tile {
-                                    Vert | NE | NW => true,
-                                    _ => false,
-                                }
+                                matches!(start_tile, Vert | NE | NW)
                             }
                             _ => false,
                         }

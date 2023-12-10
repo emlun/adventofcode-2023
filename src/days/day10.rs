@@ -26,60 +26,51 @@ fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
             }
         })
         .unwrap();
-    let first_steps: Vec<((usize, usize), (usize, usize))> = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        .iter()
-        .flat_map(|(dx, dy)| {
-            let pos = (
-                start_x.overflowing_add_signed(*dx).0,
-                start_y.overflowing_add_signed(*dy).0,
-            );
-            map.get(&pos).and_then(|t| match (dx, dy, t) {
-                (_, 0, Horz) => Some(pos),
-                (0, _, Vert) => Some(pos),
-                (-1, 0, NE | SE) => Some(pos),
-                (1, 0, NW | SW) => Some(pos),
-                (0, -1, SE | SW) => Some(pos),
-                (0, 1, NE | NW) => Some(pos),
-                _ => None,
-            })
-        })
-        .map(|pos| ((*start_x, *start_y), pos))
-        .collect();
-
-    2 + (0..)
-        .scan(first_steps, |state, _| {
-            let new_poss: Vec<((usize, usize), (usize, usize))> = state
-                .iter()
-                .map(|(prev_pos, pos @ (x, y))| {
-                    [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                        .iter()
-                        .flat_map(|(dx, dy)| {
-                            let new_pos = (
-                                x.overflowing_add_signed(*dx).0,
-                                y.overflowing_add_signed(*dy).0,
-                            );
-                            if new_pos == *prev_pos {
-                                None
-                            } else {
-                                match (dx, dy, &map[&pos]) {
-                                    (_, 0, Horz) => Some(new_pos),
-                                    (0, _, Vert) => Some(new_pos),
-                                    (-1, 0, NW | SW) => Some(new_pos),
-                                    (1, 0, NE | SE) => Some(new_pos),
-                                    (0, -1, NE | NW) => Some(new_pos),
-                                    (0, 1, SE | SW) => Some(new_pos),
-                                    _ => None,
+    1 + (0..)
+        .scan(
+            vec![((*start_x, *start_y), (*start_x, *start_y))],
+            |state, _| {
+                let new_poss: Vec<((usize, usize), (usize, usize))> = state
+                    .iter()
+                    .flat_map(|(prev_pos, pos @ (x, y))| {
+                        [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                            .iter()
+                            .filter(move |(dx, dy)| match (dx, dy, &map[&pos]) {
+                                (_, 0, Horz) => true,
+                                (0, _, Vert) => true,
+                                (-1, 0, NW | SW) => true,
+                                (1, 0, NE | SE) => true,
+                                (0, -1, NE | NW) => true,
+                                (0, 1, SE | SW) => true,
+                                (_, _, Start) => true,
+                                _ => false,
+                            })
+                            .flat_map(move |(dx, dy)| {
+                                let new_pos = (
+                                    x.overflowing_add_signed(*dx).0,
+                                    y.overflowing_add_signed(*dy).0,
+                                );
+                                if new_pos == *prev_pos {
+                                    None
+                                } else {
+                                    match (dx, dy, &map[&new_pos]) {
+                                        (_, 0, Horz) => Some(new_pos),
+                                        (0, _, Vert) => Some(new_pos),
+                                        (-1, 0, NE | SE) => Some(new_pos),
+                                        (1, 0, NW | SW) => Some(new_pos),
+                                        (0, -1, SE | SW) => Some(new_pos),
+                                        (0, 1, NE | NW) => Some(new_pos),
+                                        _ => None,
+                                    }
                                 }
-                            }
-                        })
-                        .map(|new_pos| (*pos, new_pos))
-                        .next()
-                        .unwrap()
-                })
-                .collect();
-            *state = new_poss.clone();
-            Some(new_poss)
-        })
+                            })
+                            .map(|new_pos| (*pos, new_pos))
+                    })
+                    .collect();
+                *state = new_poss.clone();
+                Some(new_poss)
+            },
+        )
         .take_while(|poss| {
             !(poss.iter().all(|(_, pos)| *pos == poss[0].1)
                 || (poss[0].0 == poss[1].1 && poss[1].0 == poss[0].1))

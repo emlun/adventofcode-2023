@@ -124,48 +124,36 @@ fn solve_a(map: &HashMap<(usize, usize), Tile>) -> usize {
 fn solve_b(map: &HashMap<(usize, usize), Tile>) -> usize {
     let main_loop = find_main_loop(map);
 
-    map.keys()
-        .filter(|pos| !main_loop.contains(pos))
-        .filter(|(x, y)| {
-            if x <= y {
-                let parity = (0..*x)
-                    .filter(|xx| {
-                        use Tile::*;
-                        main_loop.contains(&(*xx, *y))
-                            && match map.get(&(*xx, *y)) {
-                                Some(Vert | NE | NW) => true,
-                                Some(Start) => {
-                                    let start_tile = identify_start((*xx, *y), map);
-                                    matches!(start_tile, Vert | NE | NW)
-                                }
-                                _ => false,
-                            }
-                    })
-                    .count()
-                    % 2;
+    let minx = map.keys().map(|(x, _)| *x).min().unwrap();
+    let maxx = map.keys().map(|(x, _)| *x).max().unwrap();
+    let miny = map.keys().map(|(_, y)| *y).min().unwrap();
+    let maxy = map.keys().map(|(_, y)| *y).max().unwrap();
 
-                parity == 1
-            } else {
-                let parity = (0..*y)
-                    .filter(|yy| {
-                        use Tile::*;
-                        main_loop.contains(&(*x, *yy))
-                            && match map.get(&(*x, *yy)) {
-                                Some(Horz | NE | SE) => true,
-                                Some(Start) => {
-                                    let start_tile = identify_start((*x, *yy), map);
-                                    matches!(start_tile, Horz | NE | SE)
-                                }
-                                _ => false,
-                            }
-                    })
-                    .count()
-                    % 2;
-
-                parity == 1
-            }
+    (miny..maxy)
+        .map(|y| {
+            let (_, enclosed) = (minx..=maxx).fold((0, 0), |(crossings, enclosed), x| {
+                use Tile::*;
+                let is_in_main_loop = main_loop.contains(&(x, y));
+                let is_crossing = is_in_main_loop
+                    && match map.get(&(x, y)) {
+                        Some(Vert | NE | NW) => true,
+                        Some(Start) => {
+                            let start_tile = identify_start((x, y), map);
+                            matches!(start_tile, Vert | NE | NW)
+                        }
+                        _ => false,
+                    };
+                if is_crossing {
+                    (crossings + 1, enclosed)
+                } else if !is_in_main_loop {
+                    (crossings, enclosed + (crossings % 2))
+                } else {
+                    (crossings, enclosed)
+                }
+            });
+            enclosed
         })
-        .count()
+        .sum()
 }
 
 pub fn solve(lines: &[String]) -> Solution {

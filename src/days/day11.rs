@@ -33,22 +33,8 @@ fn expand(map: &[Vec<bool>], size: usize) -> HashSet<(usize, usize)> {
         .collect()
 }
 
-fn solve_a(map: &[Vec<bool>]) -> usize {
-    let map = expand(map, 2);
-    map.iter()
-        .flat_map(|pos1| {
-            map.iter().filter(move |pos2| pos1 != *pos2).map(|pos2| {
-                let (x1, y1) = pos1;
-                let (x2, y2) = pos2;
-                x1.abs_diff(*x2) + y1.abs_diff(*y2)
-            })
-        })
-        .sum::<usize>()
-        / 2
-}
-
-fn solve_b(map: &[Vec<bool>]) -> usize {
-    let map = expand(map, 1_000_000);
+fn solve_ab(map: &[Vec<bool>], size: usize) -> usize {
+    let map = expand(map, size);
     map.iter()
         .flat_map(|pos1| {
             map.iter().filter(move |pos2| pos1 != *pos2).map(|pos2| {
@@ -69,5 +55,8 @@ pub fn solve(lines: &[String]) -> Solution {
         .map(|line| line.chars().map(|chr| chr == '#').collect())
         .collect();
 
-    (solve_a(&map).to_string(), solve_b(&map).to_string())
+    (
+        solve_ab(&map, 2).to_string(),
+        solve_ab(&map, 1_000_000).to_string(),
+    )
 }

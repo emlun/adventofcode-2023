@@ -1,8 +1,6 @@
-use std::collections::HashSet;
-
 use crate::common::Solution;
 
-fn expand(map: &[Vec<bool>], size: usize) -> HashSet<(usize, usize)> {
+fn expand(map: &[Vec<bool>], size: usize) -> Vec<(usize, usize)> {
     let size = size - 1;
     let expand_rows: Vec<usize> = map
         .iter()
@@ -36,15 +34,15 @@ fn expand(map: &[Vec<bool>], size: usize) -> HashSet<(usize, usize)> {
 fn solve_ab(map: &[Vec<bool>], size: usize) -> usize {
     let map = expand(map, size);
     map.iter()
-        .flat_map(|pos1| {
-            map.iter().filter(move |pos2| pos1 != *pos2).map(|pos2| {
+        .enumerate()
+        .flat_map(|(i, pos1)| {
+            map.iter().skip(i + 1).map(|pos2| {
                 let (x1, y1) = pos1;
                 let (x2, y2) = pos2;
                 x1.abs_diff(*x2) + y1.abs_diff(*y2)
             })
         })
         .sum::<usize>()
-        / 2
 }
 
 pub fn solve(lines: &[String]) -> Solution {

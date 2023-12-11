@@ -14,7 +14,7 @@ fn solve_dim(v: &[i64], expansion_size: i64) -> i64 {
         .enumerate()
         .zip(expansions)
         .map(|((i, x), exp)| (2 * i as i64 - v.len() as i64 + 1) * (x + exp))
-        .sum::<i64>()
+        .sum()
 }
 
 fn solve_ab(xs: &[i64], ys: &[i64], expansion_size: i64) -> i64 {

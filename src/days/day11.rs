@@ -27,16 +27,22 @@ pub fn solve(lines: &[String]) -> Solution {
         .map(|s| s.trim())
         .filter(|line| !line.is_empty())
         .enumerate()
-        .fold((Vec::new(), Vec::new()), |(mut xs, mut ys), (r, line)| {
-            xs.extend(
-                line.chars()
-                    .enumerate()
-                    .filter(|(_, chr)| *chr == '#')
-                    .map(|(c, _)| c as i64),
-            );
-            ys.resize(xs.len(), r as i64);
-            (xs, ys)
-        });
+        .fold(
+            (
+                Vec::with_capacity(lines.len() * 4),
+                Vec::with_capacity(lines.len() * 4),
+            ),
+            |(mut xs, mut ys), (r, line)| {
+                xs.extend(
+                    line.chars()
+                        .enumerate()
+                        .filter(|(_, chr)| *chr == '#')
+                        .map(|(c, _)| c as i64),
+                );
+                ys.resize(xs.len(), r as i64);
+                (xs, ys)
+            },
+        );
     xs.sort();
 
     (

@@ -28,16 +28,13 @@ pub fn solve(lines: &[String]) -> Solution {
         .filter(|line| !line.is_empty())
         .enumerate()
         .fold((Vec::new(), Vec::new()), |(mut xs, mut ys), (r, line)| {
-            ys.resize(
-                ys.len() + line.chars().filter(|c| *c == '#').count(),
-                r as i64,
-            );
             xs.extend(
                 line.chars()
                     .enumerate()
                     .filter(|(_, chr)| *chr == '#')
                     .map(|(c, _)| c as i64),
             );
+            ys.resize(xs.len(), r as i64);
             (xs, ys)
         });
     xs.sort();

@@ -1,60 +1,55 @@
 use crate::common::Solution;
+use crate::util::iter::WithSliding;
 
-fn expand(map: &[Vec<bool>], size: usize) -> Vec<(usize, usize)> {
-    let size = size - 1;
-    let expand_rows: Vec<usize> = map
-        .iter()
-        .enumerate()
-        .filter(|(_, row)| row.iter().all(|b| !*b))
-        .map(|(r, _)| r)
+fn solve_dim(v: &[i64], expansion_size: i64) -> i64 {
+    let expansion_insertion_size = expansion_size - 1;
+    let expansions: Vec<i64> = [0]
+        .into_iter()
+        .chain(v.iter().sliding2().scan(0, |exp, (a, b)| {
+            *exp += std::cmp::max(0, b - a - 1) * expansion_insertion_size;
+            Some(*exp)
+        }))
         .collect();
-    let expand_cols: Vec<usize> = (0..map[0].len())
-        .filter(|c| map.iter().all(|row| !row[*c]))
-        .collect();
-
-    map.iter()
+    v.iter()
         .enumerate()
-        .flat_map(|(r, row)| {
-            row.iter()
-                .enumerate()
-                .filter(|(_, b)| **b)
-                .map(move |(c, _)| (c, r))
+        .zip(expansions)
+        .map(|((i, x), exp)| {
+            let num_left = i as i64 - v[..i].iter().rev().take_while(|xx| *xx == x).count() as i64;
+            let num_right =
+                v.len() as i64 - i as i64 - v[i..].iter().take_while(|xx| *xx == x).count() as i64;
+            2 * (num_left - num_right) * (x + exp)
         })
-        .map(|(c, r)| {
-            let col_expansion_factor = expand_cols.iter().take_while(|cc| **cc < c).count();
-            let row_expansion_factor = expand_rows.iter().take_while(|rr| **rr < r).count();
-            (
-                c + col_expansion_factor * size,
-                r + row_expansion_factor * size,
-            )
-        })
-        .collect()
+        .sum::<i64>()
+        / 2
 }
 
-fn solve_ab(map: &[Vec<bool>], size: usize) -> usize {
-    let map = expand(map, size);
-    map.iter()
-        .enumerate()
-        .flat_map(|(i, pos1)| {
-            map.iter().skip(i + 1).map(|pos2| {
-                let (x1, y1) = pos1;
-                let (x2, y2) = pos2;
-                x1.abs_diff(*x2) + y1.abs_diff(*y2)
-            })
-        })
-        .sum::<usize>()
+fn solve_ab(xs: &[i64], ys: &[i64], expansion_size: i64) -> i64 {
+    solve_dim(xs, expansion_size) + solve_dim(ys, expansion_size)
 }
 
 pub fn solve(lines: &[String]) -> Solution {
-    let map: Vec<Vec<bool>> = lines
+    let (mut xs, ys): (Vec<i64>, Vec<i64>) = lines
         .iter()
         .map(|s| s.trim())
         .filter(|line| !line.is_empty())
-        .map(|line| line.chars().map(|chr| chr == '#').collect())
-        .collect();
+        .enumerate()
+        .fold((Vec::new(), Vec::new()), |(mut xs, mut ys), (r, line)| {
+            ys.resize(
+                ys.len() + line.chars().filter(|c| *c == '#').count(),
+                r as i64,
+            );
+            xs.extend(
+                line.chars()
+                    .enumerate()
+                    .filter(|(_, chr)| *chr == '#')
+                    .map(|(c, _)| c as i64),
+            );
+            (xs, ys)
+        });
+    xs.sort();
 
     (
-        solve_ab(&map, 2).to_string(),
-        solve_ab(&map, 1_000_000).to_string(),
+        solve_ab(&xs, &ys, 2).to_string(),
+        solve_ab(&xs, &ys, 1_000_000).to_string(),
     )
 }

@@ -13,12 +13,7 @@ fn solve_dim(v: &[i64], expansion_size: i64) -> i64 {
     v.iter()
         .enumerate()
         .zip(expansions)
-        .map(|((i, x), exp)| {
-            let num_left = i as i64 - v[..i].iter().rev().take_while(|xx| *xx == x).count() as i64;
-            let num_right =
-                v.len() as i64 - i as i64 - v[i..].iter().take_while(|xx| *xx == x).count() as i64;
-            (num_left - num_right) * (x + exp)
-        })
+        .map(|((i, x), exp)| (2 * i as i64 - v.len() as i64 + 1) * (x + exp))
         .sum::<i64>()
 }
 

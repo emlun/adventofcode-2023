@@ -17,10 +17,9 @@ fn solve_dim(v: &[i64], expansion_size: i64) -> i64 {
             let num_left = i as i64 - v[..i].iter().rev().take_while(|xx| *xx == x).count() as i64;
             let num_right =
                 v.len() as i64 - i as i64 - v[i..].iter().take_while(|xx| *xx == x).count() as i64;
-            2 * (num_left - num_right) * (x + exp)
+            (num_left - num_right) * (x + exp)
         })
         .sum::<i64>()
-        / 2
 }
 
 fn solve_ab(xs: &[i64], ys: &[i64], expansion_size: i64) -> i64 {

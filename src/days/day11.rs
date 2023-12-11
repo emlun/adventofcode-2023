@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::common::Solution;
@@ -18,7 +17,7 @@ fn expand(map: &[Vec<bool>], size: usize) -> HashSet<(usize, usize)> {
     map.iter()
         .enumerate()
         .flat_map(|(r, row)| {
-            row.into_iter()
+            row.iter()
                 .enumerate()
                 .filter(|(_, b)| **b)
                 .map(move |(c, _)| (c, r))
@@ -49,7 +48,7 @@ fn solve_a(map: &[Vec<bool>]) -> usize {
 }
 
 fn solve_b(map: &[Vec<bool>]) -> usize {
-    let map = expand(map, 1000_000);
+    let map = expand(map, 1_000_000);
     map.iter()
         .flat_map(|pos1| {
             map.iter().filter(move |pos2| pos1 != *pos2).map(|pos2| {
@@ -67,13 +66,7 @@ pub fn solve(lines: &[String]) -> Solution {
         .iter()
         .map(|s| s.trim())
         .filter(|line| !line.is_empty())
-        .enumerate()
-        .map(|(r, line)| {
-            line.chars()
-                .enumerate()
-                .map(|(_, chr)| chr == '#')
-                .collect()
-        })
+        .map(|line| line.chars().map(|chr| chr == '#').collect())
         .collect();
 
     (solve_a(&map).to_string(), solve_b(&map).to_string())

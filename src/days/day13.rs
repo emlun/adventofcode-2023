@@ -1,38 +1,6 @@
 use crate::common::Solution;
 
-fn solve_a(patterns: &[Vec<Vec<bool>>]) -> usize {
-    patterns
-        .iter()
-        .map(|pattern| {
-            let horiz = (1..(pattern[0].len()))
-                .find(|reflection_col| {
-                    pattern.iter().all(|row| {
-                        std::iter::zip(
-                            row.iter().take(*reflection_col).rev(),
-                            row.iter().skip(*reflection_col),
-                        )
-                        .all(|(a, b)| a == b)
-                    })
-                })
-                .unwrap_or(0);
-
-            let vert = (1..(pattern.len()))
-                .find(|reflection_row| {
-                    std::iter::zip(
-                        pattern.iter().take(*reflection_row).rev(),
-                        pattern.iter().skip(*reflection_row),
-                    )
-                    .all(|(a, b)| a == b)
-                })
-                .unwrap_or(0);
-
-            assert!(vert == 0 || horiz == 0);
-            100 * vert + horiz
-        })
-        .sum()
-}
-
-fn solve_b(patterns: &[Vec<Vec<bool>>]) -> usize {
+fn solve_ab(patterns: &[Vec<Vec<bool>>], num_errors: usize) -> usize {
     patterns
         .iter()
         .map(|pattern| {
@@ -49,7 +17,7 @@ fn solve_b(patterns: &[Vec<Vec<bool>>]) -> usize {
                             .count()
                         })
                         .sum::<usize>()
-                        == 1
+                        == num_errors
                 })
                 .unwrap_or(0);
 
@@ -61,11 +29,10 @@ fn solve_b(patterns: &[Vec<Vec<bool>>]) -> usize {
                     )
                     .map(|(row_a, row_b)| row_a.iter().zip(row_b).filter(|(a, b)| a != b).count())
                     .sum::<usize>()
-                        == 1
+                        == num_errors
                 })
                 .unwrap_or(0);
 
-            assert!(vert == 0 || horiz == 0);
             100 * vert + horiz
         })
         .sum()
@@ -92,7 +59,7 @@ pub fn solve(lines: &[String]) -> Solution {
     }
 
     (
-        solve_a(&patterns).to_string(),
-        solve_b(&patterns).to_string(),
+        solve_ab(&patterns, 0).to_string(),
+        solve_ab(&patterns, 1).to_string(),
     )
 }

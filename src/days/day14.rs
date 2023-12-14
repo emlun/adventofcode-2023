@@ -40,9 +40,9 @@ fn spin_cycle(
 
     for (r, c) in rocks.iter_mut() {
         let rolled_r = map_ns[*c]
-            .iter()
-            .take_while(|rr| *rr < r)
-            .last()
+            .partition_point(|rr| *rr < *r)
+            .checked_sub(1)
+            .and_then(|i| map_ns[*c].get(i))
             .map(|r| r + 1)
             .unwrap_or(0);
         let colliding_count = roll_counts.entry((rolled_r, *c)).or_insert(0);
@@ -53,9 +53,9 @@ fn spin_cycle(
     roll_counts.clear();
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
-            .iter()
-            .take_while(|cc| *cc < c)
-            .last()
+            .partition_point(|cc| *cc < *c)
+            .checked_sub(1)
+            .and_then(|i| map_we[*r].get(i))
             .map(|c| c + 1)
             .unwrap_or(0);
         let colliding_count = roll_counts.entry((*r, rolled_c)).or_insert(0);
@@ -66,8 +66,7 @@ fn spin_cycle(
     roll_counts.clear();
     for (r, c) in rocks.iter_mut() {
         let rolled_r = map_ns[*c]
-            .iter()
-            .find(|rr| *rr > r)
+            .get(map_ns[*c].partition_point(|rr| rr < r))
             .map(|r| r - 1)
             .unwrap_or(map_height - 1);
         let colliding_count = roll_counts.entry((rolled_r, *c)).or_insert(0);
@@ -78,8 +77,7 @@ fn spin_cycle(
     roll_counts.clear();
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
-            .iter()
-            .find(|cc| *cc > c)
+            .get(map_we[*r].partition_point(|cc| cc < c))
             .map(|c| c - 1)
             .unwrap_or(map_width - 1);
         let colliding_count = roll_counts.entry((*r, rolled_c)).or_insert(0);

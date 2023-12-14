@@ -53,7 +53,7 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(r, c)| *c);
+    rocks.sort_by_key(|(_, c)| *c);
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
             .iter()
@@ -67,7 +67,7 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(r, c)| Reverse(*r));
+    rocks.sort_by_key(|(r, _)| Reverse(*r));
     for (r, c) in rocks.iter_mut() {
         let rolled_r = map_ns[*c]
             .iter()
@@ -80,7 +80,7 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(r, c)| Reverse(*c));
+    rocks.sort_by_key(|(_, c)| Reverse(*c));
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
             .iter()
@@ -120,24 +120,6 @@ fn solve_b(
     }
 
     rocks.into_iter().map(|(r, _)| map_height - r).sum()
-}
-
-fn print_state(rocks: &[(usize, usize)], map_we: &[Vec<usize>], map_width: usize) {
-    for (r, map_row) in map_we.iter().enumerate() {
-        for c in 0..map_width {
-            print!(
-                "{}",
-                if rocks.contains(&(r, c)) {
-                    'O'
-                } else if map_row.contains(&c) {
-                    '#'
-                } else {
-                    '.'
-                }
-            );
-        }
-        println!();
-    }
 }
 
 pub fn solve(lines: &[String]) -> Solution {

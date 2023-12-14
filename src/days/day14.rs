@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::{common::Solution, util::iter::Countable};
@@ -28,8 +30,118 @@ fn solve_a(rocks: &HashSet<(usize, usize)>, map: &[Vec<usize>], map_height: usiz
         .sum()
 }
 
+fn spin_cycle(
+    mut rocks: Vec<(usize, usize)>,
+    map_ns: &[Vec<usize>],
+    map_we: &[Vec<usize>],
+    map_height: usize,
+    map_width: usize,
+) -> Vec<(usize, usize)> {
+    let mut roll_counts: HashMap<(usize, usize), usize> = HashMap::with_capacity(rocks.len());
+
+    rocks.sort();
+    for (r, c) in rocks.iter_mut() {
+        let rolled_r = map_ns[*c]
+            .iter()
+            .take_while(|rr| *rr < r)
+            .last()
+            .map(|r| r + 1)
+            .unwrap_or(0);
+        let colliding_count = roll_counts.entry((rolled_r, *c)).or_insert(0);
+        *r = rolled_r + *colliding_count;
+        *colliding_count += 1;
+    }
+
+    roll_counts.clear();
+    rocks.sort_by_key(|(r, c)| *c);
+    for (r, c) in rocks.iter_mut() {
+        let rolled_c = map_we[*r]
+            .iter()
+            .take_while(|cc| *cc < c)
+            .last()
+            .map(|c| c + 1)
+            .unwrap_or(0);
+        let colliding_count = roll_counts.entry((*r, rolled_c)).or_insert(0);
+        *c = rolled_c + *colliding_count;
+        *colliding_count += 1;
+    }
+
+    roll_counts.clear();
+    rocks.sort_by_key(|(r, c)| Reverse(*r));
+    for (r, c) in rocks.iter_mut() {
+        let rolled_r = map_ns[*c]
+            .iter()
+            .find(|rr| *rr > r)
+            .map(|r| r - 1)
+            .unwrap_or(map_height - 1);
+        let colliding_count = roll_counts.entry((rolled_r, *c)).or_insert(0);
+        *r = rolled_r - *colliding_count;
+        *colliding_count += 1;
+    }
+
+    roll_counts.clear();
+    rocks.sort_by_key(|(r, c)| Reverse(*c));
+    for (r, c) in rocks.iter_mut() {
+        let rolled_c = map_we[*r]
+            .iter()
+            .find(|cc| *cc > c)
+            .map(|c| c - 1)
+            .unwrap_or(map_width - 1);
+        let colliding_count = roll_counts.entry((*r, rolled_c)).or_insert(0);
+        *c = rolled_c - *colliding_count;
+        *colliding_count += 1;
+    }
+
+    rocks
+}
+
+fn solve_b(
+    rocks: &HashSet<(usize, usize)>,
+    map_ns: &[Vec<usize>],
+    map_we: &[Vec<usize>],
+    map_height: usize,
+    map_width: usize,
+) -> usize {
+    let mut rocks: Vec<(usize, usize)> = rocks.iter().copied().collect();
+    let mut states_seen: HashMap<Vec<(usize, usize)>, usize> = HashMap::new();
+    let mut i = 0;
+    while i < 1_000_000_000 {
+        if let Some(prev_i) = states_seen.get(&rocks) {
+            let cycle_len = i - prev_i;
+            while i + cycle_len < 1_000_000_000 {
+                i += cycle_len;
+            }
+        }
+
+        states_seen.insert(rocks.clone(), i);
+        rocks = spin_cycle(rocks, map_ns, map_we, map_height, map_width);
+
+        i += 1;
+    }
+
+    rocks.into_iter().map(|(r, _)| map_height - r).sum()
+}
+
+fn print_state(rocks: &[(usize, usize)], map_we: &[Vec<usize>], map_width: usize) {
+    for (r, map_row) in map_we.iter().enumerate() {
+        for c in 0..map_width {
+            print!(
+                "{}",
+                if rocks.contains(&(r, c)) {
+                    'O'
+                } else if map_row.contains(&c) {
+                    '#'
+                } else {
+                    '.'
+                }
+            );
+        }
+        println!();
+    }
+}
+
 pub fn solve(lines: &[String]) -> Solution {
-    let (rocks, map, map_height): (HashSet<(usize, usize)>, Vec<Vec<usize>>, usize) = lines
+    let (rocks, map_ns, map_height): (HashSet<(usize, usize)>, Vec<Vec<usize>>, usize) = lines
         .iter()
         .map(|s| s.trim())
         .filter(|line| !line.is_empty())
@@ -52,9 +164,20 @@ pub fn solve(lines: &[String]) -> Solution {
                 (rocks, map, map_height + 1)
             },
         );
+    let map_we: Vec<Vec<usize>> =
+        map_ns
+            .iter()
+            .enumerate()
+            .fold(vec![vec![]; map_height], |mut map_we, (c, column)| {
+                for r in column.iter().copied() {
+                    map_we[r].push(c);
+                }
+                map_we
+            });
+    let map_width = map_ns.len();
 
     (
-        solve_a(&rocks, &map, map_height).to_string(),
-        "".to_string(),
+        solve_a(&rocks, &map_ns, map_height).to_string(),
+        solve_b(&rocks, &map_ns, &map_we, map_height, map_width).to_string(),
     )
 }

@@ -60,7 +60,7 @@ fn count_combinations(
 fn solve_a(springs: &[(Vec<Status>, Vec<usize>)]) -> usize {
     springs
         .iter()
-        .map(|(pattern, broken_counts)| count_combinations(&broken_counts, &[], &pattern))
+        .map(|(pattern, broken_counts)| count_combinations(broken_counts, &[], pattern))
         .sum()
 }
 

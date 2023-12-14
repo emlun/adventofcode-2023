@@ -105,12 +105,11 @@ fn solve_b(
     let mut rocks: Vec<(usize, usize)> = rocks.iter().copied().collect();
     let mut states_seen: HashMap<Vec<(usize, usize)>, usize> = HashMap::new();
     let mut i = 0;
-    while i < 1_000_000_000 {
+    const SPINS: usize = 1_000_000_000;
+    while i < SPINS {
         if let Some(prev_i) = states_seen.get(&rocks) {
             let cycle_len = i - prev_i;
-            while i + cycle_len < 1_000_000_000 {
-                i += cycle_len;
-            }
+            i = SPINS - ((SPINS - i) % cycle_len)
         }
 
         states_seen.insert(rocks.clone(), i);

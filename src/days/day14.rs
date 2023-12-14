@@ -1,4 +1,3 @@
-use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -39,7 +38,6 @@ fn spin_cycle(
 ) -> Vec<(usize, usize)> {
     let mut roll_counts: HashMap<(usize, usize), usize> = HashMap::with_capacity(rocks.len());
 
-    rocks.sort();
     for (r, c) in rocks.iter_mut() {
         let rolled_r = map_ns[*c]
             .iter()
@@ -53,7 +51,6 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(_, c)| *c);
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
             .iter()
@@ -67,7 +64,6 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(r, _)| Reverse(*r));
     for (r, c) in rocks.iter_mut() {
         let rolled_r = map_ns[*c]
             .iter()
@@ -80,7 +76,6 @@ fn spin_cycle(
     }
 
     roll_counts.clear();
-    rocks.sort_by_key(|(_, c)| Reverse(*c));
     for (r, c) in rocks.iter_mut() {
         let rolled_c = map_we[*r]
             .iter()
@@ -114,6 +109,7 @@ fn solve_b(
 
         states_seen.insert(rocks.clone(), i);
         rocks = spin_cycle(rocks, map_ns, map_we, map_height, map_width);
+        rocks.sort();
 
         i += 1;
     }

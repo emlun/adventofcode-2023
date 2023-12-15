@@ -16,16 +16,16 @@ fn solve_b(steps: &[&str]) -> usize {
         .fold(
             std::array::from_fn(Vec::with_capacity),
             |mut map: [Vec<(&str, u8)>; 256], step| {
-                let (label, flen, add): (&str, u8, bool) =
+                let (label, add_flen): (&str, Option<u8>) =
                     if let Some((label, flen)) = step.split_once('=') {
-                        (label, flen.parse().unwrap(), true)
-                    } else if let Some((label, _)) = step.split_once('-') {
-                        (label, 0, false)
+                        (label, Some(flen.parse().unwrap()))
+                    } else if let Some(label) = step.strip_suffix('-') {
+                        (label, None)
                     } else {
                         unimplemented!()
                     };
                 let hash = hash(label) as usize;
-                if add {
+                if let Some(flen) = add_flen {
                     if let Some((_, existing_flen)) =
                         map[hash].iter_mut().find(|(l, _)| *l == label)
                     {
@@ -42,10 +42,11 @@ fn solve_b(steps: &[&str]) -> usize {
         .iter()
         .enumerate()
         .flat_map(|(i_box, lenses)| {
+            let box_num = i_box + 1;
             lenses
                 .iter()
                 .enumerate()
-                .map(move |(i_lens, (_, flen))| (i_box + 1) * (i_lens + 1) * (*flen as usize))
+                .map(move |(i_lens, (_, flen))| box_num * (i_lens + 1) * (*flen as usize))
         })
         .sum()
 }

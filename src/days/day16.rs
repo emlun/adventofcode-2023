@@ -25,27 +25,26 @@ fn simulate(
             .into_iter()
             .flat_map(|((r, c), (dr, dc))| {
                 r.checked_add_signed(dr)
-                    .and_then(|rr| c.checked_add_signed(dc).map(|cc| (rr, cc)))
-                    .into_iter()
-                    .flat_map(move |(rr, cc)| {
-                        use Tile::*;
-                        (match ((dr, dc), map.get(&(rr, cc))) {
-                            ((0, 1), Some(MirrorNE)) => Some([(-1, 0)].iter()),
-                            ((0, -1), Some(MirrorNE)) => Some([(1, 0)].iter()),
-                            ((1, 0), Some(MirrorNE)) => Some([(0, -1)].iter()),
-                            ((-1, 0), Some(MirrorNE)) => Some([(0, 1)].iter()),
-                            ((0, 1), Some(MirrorSE)) => Some([(1, 0)].iter()),
-                            ((0, -1), Some(MirrorSE)) => Some([(-1, 0)].iter()),
-                            ((1, 0), Some(MirrorSE)) => Some([(0, 1)].iter()),
-                            ((-1, 0), Some(MirrorSE)) => Some([(0, -1)].iter()),
-                            ((0, _), Some(SplitterNS)) => Some([(1, 0), (-1, 0)].iter()),
-                            ((_, 0), Some(SplitterWE)) => Some([(0, 1), (0, -1)].iter()),
-                            _ => None,
-                        })
-                        .unwrap_or([(dr, dc)].iter())
-                        .map(move |(drr, dcc)| ((rr, cc), (*drr, *dcc)))
-                        .collect::<Vec<_>>()
-                    })
+                    .and_then(|rr| c.checked_add_signed(dc).map(|cc| ((rr, cc), (dr, dc))))
+            })
+            .flat_map(move |((rr, cc), (dr, dc))| {
+                use Tile::*;
+                (match ((dr, dc), map.get(&(rr, cc))) {
+                    ((0, 1), Some(MirrorNE)) => Some([(-1, 0)].iter()),
+                    ((0, -1), Some(MirrorNE)) => Some([(1, 0)].iter()),
+                    ((1, 0), Some(MirrorNE)) => Some([(0, -1)].iter()),
+                    ((-1, 0), Some(MirrorNE)) => Some([(0, 1)].iter()),
+                    ((0, 1), Some(MirrorSE)) => Some([(1, 0)].iter()),
+                    ((0, -1), Some(MirrorSE)) => Some([(-1, 0)].iter()),
+                    ((1, 0), Some(MirrorSE)) => Some([(0, 1)].iter()),
+                    ((-1, 0), Some(MirrorSE)) => Some([(0, -1)].iter()),
+                    ((0, _), Some(SplitterNS)) => Some([(1, 0), (-1, 0)].iter()),
+                    ((_, 0), Some(SplitterWE)) => Some([(0, 1), (0, -1)].iter()),
+                    _ => None,
+                })
+                .unwrap_or([(dr, dc)].iter())
+                .map(move |(drr, dcc)| ((rr, cc), (*drr, *dcc)))
+                .collect::<Vec<_>>()
             })
             .filter(|((r, c), _)| *r <= max_r && *c <= max_c)
             .filter(|beam_pos| !energized.contains(beam_pos))

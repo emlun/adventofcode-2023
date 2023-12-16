@@ -18,7 +18,8 @@ fn simulate(
     max_c: usize,
     mut beams: Vec<BeamPos>,
 ) -> usize {
-    let mut energized: HashSet<BeamPos> = beams.iter().copied().collect();
+    let mut energized: HashSet<BeamPos> = HashSet::with_capacity(max_r * max_c * 4);
+    energized.extend(&beams);
     let energized = loop {
         beams = beams
             .into_iter()

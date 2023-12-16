@@ -12,8 +12,12 @@ enum Tile {
 
 type BeamPos = ((usize, usize), (isize, isize));
 
-fn solve_a(map: &HashMap<(usize, usize), Tile>, max_r: usize, max_c: usize) -> usize {
-    let mut beams: Vec<BeamPos> = vec![((0, 0), (0, 1))];
+fn simulate(
+    map: &HashMap<(usize, usize), Tile>,
+    max_r: usize,
+    max_c: usize,
+    mut beams: Vec<BeamPos>,
+) -> usize {
     let mut energized: HashSet<BeamPos> = beams.iter().copied().collect();
     let energized = loop {
         beams = beams
@@ -58,6 +62,21 @@ fn solve_a(map: &HashMap<(usize, usize), Tile>, max_r: usize, max_c: usize) -> u
         .len()
 }
 
+fn solve_a(map: &HashMap<(usize, usize), Tile>, max_r: usize, max_c: usize) -> usize {
+    simulate(map, max_r, max_c, vec![((0, 0), (0, 1))])
+}
+
+fn solve_b(map: &HashMap<(usize, usize), Tile>, max_r: usize, max_c: usize) -> usize {
+    (0..=max_r)
+        .map(|start_r| ((start_r, 0), (0, 1)))
+        .chain((0..=max_r).map(|start_r| ((start_r, max_c), (0, -1))))
+        .chain((0..=max_c).map(|start_c| ((0, start_c), (1, 0))))
+        .chain((0..=max_c).map(|start_c| ((max_r, start_c), (-1, 0))))
+        .map(|start_pos| simulate(map, max_r, max_c, vec![start_pos]))
+        .max()
+        .unwrap()
+}
+
 pub fn solve(lines: &[String]) -> Solution {
     let (map, max_r, max_c): (HashMap<(usize, usize), Tile>, usize, usize) = lines
         .iter()
@@ -84,5 +103,8 @@ pub fn solve(lines: &[String]) -> Solution {
             },
         );
 
-    (solve_a(&map, max_r, max_c).to_string(), "".to_string())
+    (
+        solve_a(&map, max_r, max_c).to_string(),
+        solve_b(&map, max_r, max_c).to_string(),
+    )
 }
